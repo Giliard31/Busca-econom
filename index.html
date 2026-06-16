@@ -64,7 +64,7 @@
 
             try {
                 // Altere para o link do seu PythonAnywhere quando colocar online
-                const resposta = await fetch(`http://localhost:5000/api/sefaz-ce?busca=${termo}`);
+                const resposta = await fetch(`http://giliardpcp.pythonanywhere.com/api/sefaz-ce?busca=${termo}`);
                 const dados = await resposta.json();
 
                 lista.innerHTML = "";
