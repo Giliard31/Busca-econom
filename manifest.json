@@ -1,0 +1,16 @@
+{
+  "name": "Menor Preço Ceará",
+  "short_name": "Menor Preço CE",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#004b23",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2422/2422234.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
