@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menor Preço Inteligente</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#004b23">
+    <title>Menor Preço Real - Consulta Sefaz</title>
     <style>
         :root { --sefaz: #004b23; --light: #007200; --gold: #ffb703; --bg: #f4f7f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
@@ -13,44 +11,28 @@
         header { background: linear-gradient(135deg, var(--sefaz), #002e14); color: white; padding: 25px 15px; text-align: center; border-bottom: 4px solid var(--gold); }
         .container { max-width: 550px; margin: -15px auto 0 auto; padding: 0 15px; }
         
-        .gps-status {
-            background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px;
-            font-size: 0.8rem; margin-bottom: 12px; text-align: center; font-weight: bold; border: 1px solid #ffeeba;
-        }
-
         .search-area { 
             background: white; padding: 15px; border-radius: 12px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; 
         }
-        .search-row { display: flex; gap: 8px; align-items: center; }
+        .search-row { display: flex; gap: 8px; }
         .search-area input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-        .search-area input#txCep { max-width: 130px; text-align: center; font-weight: bold; }
+        .search-area input#txCep { max-width: 120px; text-align: center; }
         .search-area button { background: var(--sefaz); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         
-        /* Alerta de confirmação da cidade do CEP */
-        .cidade-detectada {
-            font-size: 0.85rem; color: #155724; background-color: #d4edda; 
-            padding: 8px; border-radius: 6px; display: none; font-weight: bold; border: 1px solid #c3e6cb;
-        }
+        .cidade-detectada { font-size: 0.85rem; color: #155724; background-color: #d4edda; padding: 8px; border-radius: 6px; display: none; font-weight: bold; text-align: center; }
 
         .card { 
             background: white; border-radius: 10px; padding: 15px; margin-bottom: 12px; 
             display: flex; justify-content: space-between; align-items: center; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.03); border-left: 5px solid var(--light);
-            cursor: pointer; transition: transform 0.2s;
         }
-        .card:hover { transform: scale(1.01); background: #fdfdfd; }
-        
-        .info h3 { font-size: 0.95rem; margin-bottom: 4px; text-transform: uppercase; color: #111; }
-        .info .loja { font-size: 0.85rem; font-weight: bold; color: var(--sefaz); }
+        .info h3 { font-size: 0.9rem; margin-bottom: 4px; color: #111; }
+        .info .loja { font-size: 0.85rem; font-weight: bold; color: var(--sefaz); text-transform: uppercase; }
         .info .end { font-size: 0.75rem; color: #7f8c8d; margin-top: 2px; }
-        .info .cidade { font-size: 0.75rem; color: #2980b9; font-weight: bold; margin-top: 2px; }
         .info .hora { font-size: 0.7rem; background: #e8f5e9; color: #1b5e20; padding: 3px 6px; border-radius: 4px; display: inline-block; margin-top: 6px; font-weight: bold; }
-        
-        .price-zone { text-align: right; min-width: 105px; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
+        .price-zone { text-align: right; min-width: 100px; }
         .price-zone .val { font-size: 1.4rem; font-weight: bold; color: var(--light); }
-        .price-zone .dist { font-size: 0.75rem; font-weight: bold; color: #d35400; margin-top: 3px; }
-        .price-zone .rota-btn { font-size: 0.65rem; color: #fff; background: #2980b9; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 6px; text-transform: uppercase; font-weight: bold; }
         
         .status-msg { font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px; font-weight: bold; text-align: center; }
     </style>
@@ -58,95 +40,50 @@
 <body>
 
     <header>
-        <h1>Menor Preço Inteligente</h1>
-        <p>Busca Avançada com Memória de CEP</p>
+        <h1>Menor Preço Livre</h1>
+        <p>Consulta Direta à Base de Dados Estadual</p>
     </header>
 
     <div class="container"><br>
-        <div id="statusGps" class="gps-status">🌐 Buscando sua localização atual via GPS...</div>
-
         <div class="search-area">
             <div class="search-row">
-                <input type="text" id="txCep" placeholder="Seu CEP" maxlength="8">
-                <input type="text" id="txBusca" placeholder="O que você procura hoje?">
+                <input type="text" id="txCep" placeholder="CEP" maxlength="8">
+                <input type="text" id="txBusca" placeholder="Ex: Arroz, Óleo, Gasolina...">
             </div>
             <div id="painelCidade" class="cidade-detectada"></div>
-            
-            <button id="btnBuscar">Buscar Ofertas Reais</button>
+            <button id="btnBuscar">Consultar Notas Fiscais</button>
         </div>
         
-        <div class="status-msg" id="statusConexao">Insira o CEP, o produto e clique em Buscar.</div>
+        <div class="status-msg" id="statusConexao">Insira os dados para realizar a busca no Ceará.</div>
         <div id="listaProdutos"></div>
     </div>
 
     <script>
-        let minhaLat = null;
-        let minhaLon = null;
-        const raioMaximoKm = 10.0;
-
-        // Captura GPS
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                minhaLat = pos.coords.latitude;
-                minhaLon = pos.coords.longitude;
-                document.getElementById('statusGps').style.background = "#d4edda";
-                document.getElementById('statusGps').style.color = "#155724";
-                document.getElementById('statusGps').style.borderColor = "#c3e6cb";
-                document.getElementById('statusGps').innerText = "📍 GPS ATIVO: Distâncias calculadas em tempo real!";
-            }, () => {
-                document.getElementById('statusGps').innerText = "⚠️ Sem GPS. Insira o CEP para buscar as lojas da sua região.";
-            });
-        }
-
-        // MEMÓRIA LOCAL: Recupera o CEP salvo ao carregar a página
+        // Restaura CEP salvo
         window.addEventListener('DOMContentLoaded', () => {
             const cepSalvo = localStorage.getItem('usuario_cep');
             if (cepSalvo) {
                 document.getElementById('txCep').value = cepSalvo;
-                verificarCep(cepSalvo); // Verifica o nome da cidade para o CEP salvo
+                verificarCep(cepSalvo);
             }
         });
 
-        // Monitora o campo de CEP para buscar a cidade assim que digitar os 8 números
         document.getElementById('txCep').addEventListener('input', (e) => {
-            const cep = e.target.value.trim().replace(/\D/g, ''); // Remove traços se houver
-            if (cep.length === 8) {
-                verificarCep(cep);
-            } else {
-                document.getElementById('painelCidade').style.display = 'none';
-            }
+            const cep = e.target.value.trim().replace(/\D/g, '');
+            if (cep.length === 8) verificarCep(cep);
         });
 
-        // Função que consulta os Correios (ViaCEP) para validar a cidade
         async function verificarCep(cep) {
             const painel = document.getElementById('painelCidade');
             try {
                 const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
                 const dados = await resposta.json();
-                
                 if (!dados.erro) {
-                    painel.innerHTML = `🏙️ Cidade Identificada: <strong>${dados.localidade} - ${dados.uf}</strong>`;
+                    painel.innerHTML = `🏙️ Região: <strong>${dados.localidade} - ${dados.uf}</strong>`;
                     painel.style.display = 'block';
-                    // Salva o CEP válido na memória do celular
                     localStorage.setItem('usuario_cep', cep);
-                } else {
-                    painel.innerHTML = `❌ CEP não localizado nos Correios.`;
-                    painel.style.display = 'block';
-                    painel.style.backgroundColor = '#f8d7da';
-                    painel.style.color = '#721c24';
                 }
-            } catch (e) {
-                console.log("Erro ao validar CEP");
-            }
-        }
-
-        function calcularDistancia(lat1, lon1, lat2, lon2) {
-            if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-            const R = 6371; 
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            } catch (e) {}
         }
 
         async function buscarSefaz() {
@@ -155,12 +92,11 @@
             const lista = document.getElementById('listaProdutos');
             const statusTxt = document.getElementById('statusConexao');
             
-            if(!cepInput || cepInput.length !== 8) return alert("Por favor, digite um CEP válido de 8 dígitos!");
-            if(!termoInput) return alert("Por favor, digite o produto!");
+            if(!cepInput || cepInput.length !== 8) return alert("Digite o CEP válido!");
+            if(!termoInput) return alert("Digite o produto!");
 
             lista.innerHTML = "";
-            statusTxt.style.color = "var(--sefaz)";
-            statusTxt.innerText = "Buscando comércios autorizados...";
+            statusTxt.innerText = "Conectando ao portal de notas da Sefaz Ceará...";
 
             const urlCompleta = `https://giliardpcp.pythonanywhere.com/api/sefaz-ce?busca=${encodeURIComponent(termoInput)}&cep=${encodeURIComponent(cepInput)}`;
 
@@ -168,50 +104,52 @@
                 const resposta = await fetch(urlCompleta);
                 const dados = await resposta.json();
 
-                lista.innerHTML = "";
-                
-                if(dados.length === 0) {
-                    statusTxt.innerText = "Nenhum resultado para esta busca.";
-                    lista.innerHTML = "<p style='text-align:center; padding:20px; color:#777;'>Nenhum comércio localizado para este CEP.</p>";
+                // Se a API retornar um erro de conexão ou bloqueio de servidor
+                if(dados.erro) {
+                    statusTxt.innerText = "Aviso do Sistema";
+                    lista.innerHTML = `
+                        <div style="background:#fff3cd; color:#856404; padding:15px; border-radius:8px; font-size:0.85rem; border:1px solid #ffeeba;">
+                            <strong>⚠️ Restrição do Servidor Gratuito:</strong><br>
+                            O PythonAnywhere bloqueou o acesso direto ao site do governo.<br><br>
+                            Para fazer barcos livres como os aplicativos profissionais fazem, o seu servidor precisa migrar para uma conta Premium ou usar um Token de API liberado pela Sefaz.
+                        </div>`;
                     return;
                 }
 
-                statusTxt.innerText = `${dados.length} notas fiscais encontradas na sua região comercial!`;
+                lista.innerHTML = "";
+                
+                // SE A SEFAZ RETORNAR VAZIO (O QUE VOCÊ PEDIU)
+                if(dados.length === 0) {
+                    statusTxt.innerText = "Nenhum registro encontrado.";
+                    lista.innerHTML = `
+                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:8px; font-size:0.85rem; text-align:center;">
+                            <strong>🔍 Não encontramos nada!</strong><br>
+                            Nenhuma nota fiscal foi emitida para este produto nesta região nas últimas horas. Tente buscar mais tarde ou mude o termo.
+                        </div>`;
+                    return;
+                }
+
+                statusTxt.innerText = `${dados.length} notas fiscais capturadas na Sefaz!`;
 
                 dados.forEach(prod => {
-                    let textoDistancia = "GPS aguardando";
-                    if (minhaLat && minhaLon) {
-                        const distReal = calcularDistancia(minhaLat, minhaLon, prod.lat, prod.lon);
-                        textoDistancia = distReal ? `📍 a ${distReal.toFixed(1)} km` : "Próximo";
-                    }
-
                     lista.innerHTML += `
-                        <div class="card" onclick="abrirGps(${prod.lat}, ${prod.lon})">
+                        <div class="card">
                             <div class="info">
                                 <h3>${prod.produto}</h3>
                                 <div class="loja">🏪 ${prod.loja}</div>
-                                <div class="end">${prod.endereco}</div>
-                                <div class="cidade">🏙️ Município: ${prod.municipio}</div>
-                                <div class="hora">⏱️ ${prod.ultima_nota}</div>
+                                <div class="end">📍 ${prod.endereco}</div>
+                                <div class="hora">${prod.ultima_nota}</div>
                             </div>
                             <div class="price-zone">
                                 <div class="val">R$ ${prod.valor.toFixed(2).replace('.',',')}</div>
-                                <div class="dist">${textoDistancia}</div>
-                                <div class="rota-btn">VER ROTA</div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
 
             } catch (erro) {
                 console.error(erro);
-                statusTxt.style.color = "red";
-                statusTxt.innerText = "Erro ao processar busca por CEP regional.";
+                statusTxt.innerText = "Erro na comunicação.";
             }
-        }
-
-        function abrirGps(lat, lon) {
-            window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`, '_blank');
         }
 
         document.getElementById('btnBuscar').addEventListener('click', buscarSefaz);
