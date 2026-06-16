@@ -52,14 +52,12 @@
             
             lista.innerHTML = "";
             statusTxt.style.color = "#004b23";
-            statusTxt.innerText = "Conectando ao PythonAnywhere e buscando na Sefaz-CE...";
+            statusTxt.innerText = "Conectando ao PythonAnywhere de giliardpcp...";
 
-            // ATENÇÃO: COLOQUE SEU USUÁRIO ABAIXO EM LETRAS MINÚSCULAS
-            const usuarioPythonAnywhere = "giliardpcp"; 
-            const urlCompleta = `https://${usuarioPythonAnywhere}.pythonanywhere.com/api/sefaz-ce?busca=${encodeURIComponent(termoInput)}`;
+            // Link oficial ajustado diretamente para o seu servidor estável
+            const urlCompleta = `https://giliardpcp.pythonanywhere.com/api/sefaz-ce?busca=${encodeURIComponent(termoInput)}`;
 
             try {
-                // Executa a chamada na API com cabeçalhos limpos para evitar bloqueio de CORS
                 const resposta = await fetch(urlCompleta, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
@@ -71,7 +69,7 @@
 
                 const dados = await resposta.json();
                 lista.innerHTML = "";
-                statusTxt.innerText = `${dados.length} resultados encontrados com sucesso!`;
+                statusTxt.innerText = `${dados.length} resultados processados com sucesso!`;
 
                 if(dados.length === 0) {
                     lista.innerHTML = "<p style='text-align:center; padding:20px; color:#777;'>Nenhum preço disponível para este item.</p>";
@@ -93,14 +91,14 @@
                 });
 
             } catch (erro) {
-                console.error("Detalhes do erro de rede:", erro);
+                console.error(erro);
                 statusTxt.style.color = "red";
                 statusTxt.innerText = "Falha de conexão com a API.";
                 lista.innerHTML = `
                     <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:8px; font-size:0.85rem;">
                         <strong>⚠️ Erro de Comunicação:</strong><br>
-                        O site não conseguiu receber os dados do PythonAnywhere.<br><br>
-                        <strong>Como resolver:</strong> Verifique se a linha 54 do código possui o seu nome de usuário digitado corretamente e se você deu "Reload" na aba Web do PythonAnywhere.
+                        O frontend não conseguiu ler os dados da sua API.<br><br>
+                        <strong>O que fazer:</strong> Certifique-se de que salvou essa alteração no seu GitHub e aguarde 1 minuto para a Vercel/GitHub atualizar a página.
                     </div>
                 `;
             }
