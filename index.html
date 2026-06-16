@@ -6,23 +6,12 @@
     <title>Menor Preço - Sefaz Ceará</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#004b23">
-    
     <style>
         :root { --sefaz: #004b23; --light: #007200; --gold: #ffb703; --bg: #f4f7f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background-color: var(--bg); padding-bottom: 30px; }
         header { background: linear-gradient(135deg, var(--sefaz), #002e14); color: white; padding: 25px 15px; text-align: center; border-bottom: 4px solid var(--gold); }
         .container { max-width: 550px; margin: -15px auto 0 auto; padding: 0 15px; }
-        
-        /* Banner de Instalação do App */
-        .install-banner {
-            display: none; background: #fff; padding: 15px; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px;
-            justify-content: space-between; align-items: center; border: 2px solid var(--gold);
-        }
-        .install-banner p { font-size: 0.9rem; font-weight: bold; color: var(--sefaz); }
-        .install-banner button { background: var(--sefaz); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-
         .search-area { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 8px; margin-bottom: 15px; }
         .search-area input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
         .search-area button { background: var(--sefaz); color: white; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
@@ -31,6 +20,7 @@
         .info .loja { font-size: 0.85rem; font-weight: bold; color: var(--sefaz); }
         .price-zone { text-align: right; }
         .price-zone .val { font-size: 1.3rem; font-weight: bold; color: var(--light); }
+        .status-msg { font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
@@ -41,33 +31,53 @@
     </header>
 
     <div class="container"><br>
-        <div class="install-banner" id="pwaBanner">
-            <p>📱 Baixe o app no seu celular para usar na rua!</p>
-            <button id="btnInstalarApp">Instalar</button>
-        </div>
-
         <div class="search-area">
             <input type="text" id="txBusca" placeholder="Arroz, Feijão, Gasolina...">
             <button id="btnBuscar">Buscar</button>
         </div>
+        <div class="status-msg" id="statusConexao">Aguardando comando...</div>
         <div id="listaProdutos"></div>
     </div>
 
     <script>
-        // LÓGICA DE BUSCA DA API REAL
         async function buscarSefaz() {
-            const termo = document.getElementById('txBusca').value;
+            const termoInput = document.getElementById('txBusca').value.trim();
             const lista = document.getElementById('listaProdutos');
-            if(!termo) return alert("Digite o produto!");
+            const statusTxt = document.getElementById('statusConexao');
             
-            lista.innerHTML = "Buscando preços reais na Sefaz-CE...";
+            if(!termoInput) {
+                alert("Por favor, digite o nome de um produto!");
+                return;
+            }
+            
+            lista.innerHTML = "";
+            statusTxt.style.color = "#004b23";
+            statusTxt.innerText = "Conectando ao PythonAnywhere e buscando na Sefaz-CE...";
+
+            // ATENÇÃO: COLOQUE SEU USUÁRIO ABAIXO EM LETRAS MINÚSCULAS
+            const usuarioPythonAnywhere = "giliardpcp"; 
+            const urlCompleta = `https://${usuarioPythonAnywhere}.pythonanywhere.com/api/sefaz-ce?busca=${encodeURIComponent(termoInput)}`;
 
             try {
-                // Altere para o link do seu PythonAnywhere quando colocar online
-                const resposta = await fetch(`http://giliardpcp.pythonanywhere.com/api/sefaz-ce?busca=${termo}`);
-                const dados = await resposta.json();
+                // Executa a chamada na API com cabeçalhos limpos para evitar bloqueio de CORS
+                const resposta = await fetch(urlCompleta, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
 
+                if (!resposta.ok) {
+                    throw new Error(`Erro no servidor: Código ${resposta.status}`);
+                }
+
+                const dados = await resposta.json();
                 lista.innerHTML = "";
+                statusTxt.innerText = `${dados.length} resultados encontrados com sucesso!`;
+
+                if(dados.length === 0) {
+                    lista.innerHTML = "<p style='text-align:center; padding:20px; color:#777;'>Nenhum preço disponível para este item.</p>";
+                    return;
+                }
+
                 dados.forEach(prod => {
                     lista.innerHTML += `
                         <div class="card">
@@ -81,43 +91,23 @@
                         </div>
                     `;
                 });
+
             } catch (erro) {
-                lista.innerHTML = "<p style='color:red;'>Erro ao conectar com o servidor Python.</p>";
+                console.error("Detalhes do erro de rede:", erro);
+                statusTxt.style.color = "red";
+                statusTxt.innerText = "Falha de conexão com a API.";
+                lista.innerHTML = `
+                    <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:8px; font-size:0.85rem;">
+                        <strong>⚠️ Erro de Comunicação:</strong><br>
+                        O site não conseguiu receber os dados do PythonAnywhere.<br><br>
+                        <strong>Como resolver:</strong> Verifique se a linha 54 do código possui o seu nome de usuário digitado corretamente e se você deu "Reload" na aba Web do PythonAnywhere.
+                    </div>
+                `;
             }
         }
 
         document.getElementById('btnBuscar').addEventListener('click', buscarSefaz);
-
-        // LÓGICA DE INSTALAÇÃO DO APLICATIVO (PWA)
-        let disparadorInstalacao;
-        const banner = document.getElementById('pwaBanner');
-        const botaoInstalar = document.getElementById('btnInstalarApp');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Impede o navegador de mostrar o aviso padrão feio
-            e.preventDefault();
-            // Guarda o evento para usar quando o usuário clicar no botão "Instalar"
-            disparadorInstalacao = e;
-            // Mostra o nosso banner bonito na tela
-            banner.style.display = 'flex';
-        });
-
-        botaoInstalar.addEventListener('click', async () => {
-            if (disparadorInstalacao) {
-                // Mostra a caixinha oficial do sistema perguntando "Deseja instalar?"
-                disparadorInstalacao.prompt();
-                const { outcome } = await disparadorInstalacao.userChoice;
-                if (outcome === 'accepted') {
-                    banner.style.display = 'none'; // Esconde se aceitou
-                }
-                disparadorInstalacao = null;
-            }
-        });
-
-        // Registra o Service Worker (Obrigatório para o app ser instalável)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch",()=>{}).js');
-        }
+        document.getElementById('txBusca').addEventListener('keypress', (e) => { if(e.key === 'Enter') buscarSefaz(); });
     </script>
 </body>
 </html>
