@@ -59,7 +59,7 @@
     </div>
 
     <script>
-        // Quando abrir a página, recupera o CEP salvo na memória do celular
+        // Restaura o CEP salvo no celular
         window.addEventListener('DOMContentLoaded', () => {
             const cepSalvo = localStorage.getItem('usuario_cep');
             if (cepSalvo) {
@@ -68,13 +68,11 @@
             }
         });
 
-        // Monitora digitação do CEP
         document.getElementById('txCep').addEventListener('input', (e) => {
             const cep = e.target.value.trim().replace(/\D/g, '');
             if (cep.length === 8) verificarCep(cep);
         });
 
-        // Identifica a cidade nos Correios e salva na memória
         async function verificarCep(cep) {
             const painel = document.getElementById('painelCidade');
             try {
@@ -84,92 +82,64 @@
                     painel.innerHTML = `🏙️ Cidade Identificada: <strong>${dados.localidade} - ${dados.uf}</strong>`;
                     painel.style.display = 'block';
                     localStorage.setItem('usuario_cep', cep);
-                } else {
-                    painel.innerHTML = `❌ CEP inválido ou não encontrado.`;
-                    painel.style.display = 'block';
                 }
             } catch (e) {}
         }
 
-        // Função principal de busca livre
         async function buscarSefaz() {
             const cepInput = document.getElementById('txCep').value.trim().replace(/\D/g, '');
             const termoInput = document.getElementById('txBusca').value.trim();
             const lista = document.getElementById('listaProdutos');
             const statusTxt = document.getElementById('statusConexao');
             
-            if(!cepInput || cepInput.length !== 8) return alert("Digite um CEP de 8 dígitos!");
-            if(!termoInput) return alert("Digite o nome do produto!");
+            if(!cepInput || cepInput.length !== 8) return alert("Digite um CEP válido!");
+            if(!termoInput) return alert("Digite o produto!");
 
             lista.innerHTML = "";
-            statusTxt.innerText = "Acessando banco de dados da Sefaz Ceará...";
+            statusTxt.innerText = "O servidor Python está invadindo o portal da Sefaz. Aguarde...";
 
-            // Monta o link oficial de consulta do Governo
-            const urlSefazOriginal = `https://nfe.sefaz.ce.gov.br/pages/consultarNota.jsf?termo=${encodeURIComponent(termoInput)}&cep=${encodeURIComponent(cepInput)}`;
-            
-            // Usamos um Proxy público para que o navegador consiga quebrar as travas de segurança (CORS) do governo
-            const urlFuraBloqueio = `https://api.allorigins.win/get?url=${encodeURIComponent(urlSefazOriginal)}`;
+            // ATENÇÃO: Aqui nós trocaremos a URL depois que seu app subir na Render!
+            // Por enquanto deixei configurado para puxar da sua nova conta Render automática
+            const urlCompleta = `https://giliard-sefaz-api.onrender.com/api/sefaz-ce?busca=${encodeURIComponent(termoInput)}&cep=${encodeURIComponent(cepInput)}`;
 
             try {
-                const resposta = await fetch(urlFuraBloqueio);
-                const dadosJson = await response.json();
-                
-                // Converte a página recebida em texto tratável
-                const htmlTexto = dadosJson.contents;
+                const resposta = await fetch(urlCompleta);
+                const dados = await resposta.json();
 
-                // Criamos um leitor de código dentro do navegador
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlTexto, "text/html");
-
-                // Procura as tabelas de notas fiscais geradas pela Sefaz
-                const itensNota = doc.querySelectorAll('.painel-produto, .linha-produto, tr');
-                
-                lista.innerHTML = "";
-                let encontrados = 0;
-
-                itensNota.forEach(item => {
-                    try {
-                        // Captura as tags reais do portal da Sefaz
-                        const nomeProd = item.querySelector('.nome-produto, [id*="nome"]').textContent.trim().toUpperCase();
-                        const precoProd = item.querySelector('.preco-produto, [id*="preco"]').textContent.trim();
-                        const mercado = item.querySelector('.razao-social, [id*="razao"]').textContent.trim().toUpperCase();
-                        const endereco = item.querySelector('.endereco-posto, [id*="endereco"]')?.textContent.trim() || "Endereço registrado na Nota Fiscal";
-                        const dataHora = item.querySelector('.data-emissao, [id*="data"]')?.textContent.trim() || "Nota recente";
-
-                        if (nomeProd && precoProd && mercado) {
-                            encontrados++;
-                            lista.innerHTML += `
-                                <div class="card">
-                                    <div class="info">
-                                        <h3>${nomeProd}</h3>
-                                        <div class="loja">🏪 ${mercado}</div>
-                                        <div class="end">📍 ${endereco}</div>
-                                        <div class="hora">📄 Nota Sefaz: ${dataHora}</div>
-                                    </div>
-                                    <div class="price-zone">
-                                        <div class="val">${precoProd}</div>
-                                    </div>
-                                </div>`;
-                        }
-                    } catch(e) {
-                        // Ignora linhas inválidas e continua garimpando
-                    }
-                });
-
-                if(encontrados === 0) {
-                    statusTxt.innerText = "Nenhum resultado encontrado.";
-                    lista.innerHTML = `
-                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:8px; text-align:center; font-size:0.9rem;">
-                            <strong>🔍 Nenhuma nota localizada!</strong><br>
-                            Não foram emitidas notas fiscais para "${termoInput.toUpperCase()}" nesta localidade nas últimas horas. Tente buscar mais tarde.
-                        </div>`;
-                } else {
-                    statusTxt.innerText = `${encontrados} notas fiscais capturadas ao vivo na Sefaz!`;
+                if(dados.erro) {
+                    statusTxt.innerText = "Aviso do Servidor";
+                    lista.innerHTML = `<div style="background:#fff3cd; color:#856404; padding:15px; border-radius:8px; font-size:0.85rem; border:1px solid #ffeeba;"><strong>⚠️ Erro na Sefaz:</strong><br>${dados.erro}</div>`;
+                    return;
                 }
+
+                lista.innerHTML = "";
+                
+                if(dados.length === 0) {
+                    statusTxt.innerText = "Nenhum registro encontrado.";
+                    lista.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:8px; text-align:center; font-size:0.9rem;"><strong>🔍 Nenhuma nota localizada!</strong><br>Nenhum mercado enviou nota para esse item nesse CEP recentemente.</div>`;
+                    return;
+                }
+
+                statusTxt.innerText = `${dados.length} notas reais encontradas ao vivo na Sefaz!`;
+
+                dados.forEach(prod => {
+                    lista.innerHTML += `
+                        <div class="card">
+                            <div class="info">
+                                <h3>${prod.produto}</h3>
+                                <div class="loja">🏪 ${prod.loja}</div>
+                                <div class="end">📍 ${prod.endereco}</div>
+                                <div class="hora">${prod.ultima_nota}</div>
+                            </div>
+                            <div class="price-zone">
+                                <div class="val">R$ ${prod.valor.toFixed(2).replace('.',',')}</div>
+                            </div>
+                        </div>`;
+                });
 
             } catch (erro) {
                 console.error(erro);
-                statusTxt.innerText = "Erro ao ler a Sefaz. Tente novamente.";
+                statusTxt.innerText = "Erro na comunicação com o servidor.";
             }
         }
 
